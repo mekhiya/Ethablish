@@ -1,70 +1,138 @@
-# Getting Started with Create React App
+# Ethablish - establish that Email belongs to you
+Chainlink Hackathon 2022
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+```shell
+npx hardhat accounts
+npx hardhat compile
+npx hardhat clean
+npx hardhat test
+npx hardhat node
+node scripts/sample-script.js
+npx hardhat help
+```
 
-## Available Scripts
+ETHablish - Establish Trustless Identity
 
-In the project directory, you can run:
 
-### `npm start`
+TODO
+create-react-app material ui video
+send email from create react usig sendgrid
+save otp somewhere
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+Proove your Digital Identity securely
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Trsutless & Secured Digital Identity Proof
+- Create proof of your identity 
 
-### `npm run build`
+Links address to identity
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Any state change & subscription will cost gas + money
+Any view/reads will be free
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+view/Reads - Owner can decide if wants to share in open or with public key.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
+Characters
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1) Signer 
+2) Viewers
+3) DAO
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+===Future use cases - what can be verified
+email
+phone number
+Age
+bank account number
+address
+vaccine status
+passport number
+aadhar number
+etc etc...
 
-## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Who pays for creating ID Profile
+Self pay
+Viewer pays to keep watch
+Sponsors pay for someone to create profile. (A company can buy 100 licenses, share these address with people, whom it wants to create ID Profile)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Only one address linked to Email. If you want to change this pair - either address or email , only owner(first time creator) can request, pay fees & make change.
 
-### Code Splitting
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+------------------------------
+27th April
+8.25 am
 
-### Analyzing the Bundle Size
+subscribers can get alchemy alerts
+chainlink keeper can keep regular checks
+filecoin + ipfs can store screenshot
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
 
-### Making a Progressive Web App
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Also think about One time Identifier
 
-### Advanced Configuration
+Contract VerifyContract{
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+mapping addressToEmail
+- mapping will never have actual email, but will have hash of email
+- has created using priv-pub key strategy
+- where do user keep priv key??? Wallet signs it...
 
-### Deployment
+mapping - address to public key
+- has mapping of address to pub key
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+	
+}
 
-### `npm run build` fails to minify
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+UI
+
+Create Profile
+
+[email address] <send otp>
+
+[enter otp][radio: restricted/Open]<verify>
+- signs message
+- contract receives address, email, pub key,
+- stores it
+
+<Fetch my own Profile>
+- view request
+- only for owner 
+- metamask sends signed request
+- contract find profile using msg.sender address
+
+if restricted
+- returns [email, pubkey,address] <copy button>
+
+if open
+- returns [email, address]
+
+FOR VIEWERS=======
+
+[address]
+[Email]
+[pubkey] 
+<VerifyProfile>
+
+In above UI pubkey required if restrcited mode
+
+---------------------
+Create Watchers
+- alert watchers using alchemy
+- keeper using chainlink
+
+-------------------
+
+gasless aspect - biconomy
+
+-----------
+
+same code can be launched on Polygon, BNB, avalanche etc... ???
+
+-----------
+Future
+can it verify across chains ????
