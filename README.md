@@ -1,15 +1,152 @@
 # Ethablish - establish that Email belongs to you
 Chainlink Hackathon 2022
 
+ ##End Date Based Licensing 
+
+VERY IMPORTANT THAT LICENSE KEY IS SENT TO EMAIL ADDRESS.
+FOR EXAMPLE : if I am creating license key for nitin@mywebsite.com
+license key(vrf combination) is sent to same email...
+license key in readable format is availble only inside email..
+license key (hash) & Email hash are stored inside filecoin
+
+I will check my email for license key
+goto website, connect account, add license key, enter email
+generate profile
+license key (hash) to email hash is cross cheked with filecoin
+
+
+14th May ====================
+
+method generateLicenseKey
+
+Payable method
+Enter no. of license
+Enter email addresses
+per email/12 months pay 365 gwei (show pricefeed data usd cost)
+vrf method used to create key
+key hash & email hash saved inside filecoin
+email is sent with key
+
+major challenges:
+gasless working
+vrf oracle
+pricefeed oracle
+sending email
+save hash to filecoin
+
+
+End user - gasless method
+
+method createEmailProfile
+Enter email & license key
+hash of both verified with filecoin
+on chain hash of email & account address saved
+license creator gets alchemy alerts
+
+major challenges:
+gasless working
+alchemy alert
+chainlink keeper sends alert
+
+VerifyEmailProfile
+Email & Account address entered
+hash of both checked on chain
+if verified return true
+
+
+JOB Method ???
+chainlink keeper can keep regular checks ????
+send email to people who are still pedning to create profile
+send email to people who's license about to expire
+alchemy alert when licenses expiring 
+
+
+
+15th May ====================
+
+Biconomy EIP 2771, copy few lines, show diagram from 
+https://docs.biconomy.io/products/enable-gasless-transactions
+
+
+TODO
+
+UI
+- create componenets
+- use tabs
+- tab - For employers (Create Liecense), For New Joinees (Create Email Profile), for people (Verify Email Profile)
+
+Biconomy setup
+
+Chainlink
+- VRF setup
+- pricefeed setup 
+
+Save to Filecoin/IPFS
+
+Alchemy explore
+
+impement env, remove emailjs public key from code
+
+
+16th May ====================
+
+
+Emailjs command
+```
+npm install @emailjs/browser --save
+```
+
+
+1st May Notes
+
+
+uint256 expiryTime; // by default 365 days / 12 months
+
+expiryTime = block.timestamp + 12 months;
+
+require(!isRegistered[_email], 'This e-mail is already registered');
+require(!isRegistered[addressAccount], 'This e-mail is already registered');
+require(expiryTime < block.timestamp)        
+
+
+License buying fees
+36500 gwei (0.0000365 ETH) for 12 months duration
+~ 10 cents (in USD) / per EmailProfile for 12 months
+If time permists use pricefeed. Charge people 10 cents insted of gwei amount.
+Or charge in gwei but display Cents/USd value.
+
+hash email address...
+
+Amazing project idea..
+chain external adapter starts....
+Corporate create licenses for email profile creation for 100 people. Each license costs. 10 gwei... They can but n number of licenses..
+Each license is VRF key...
+lic generator stores hash of email & vrf key inside IPFS
+VRF key is sent to emails....
+chainlink EA ends....
+
+Ethablish Website....
+Individuals take this lic key & enter it..
+Box to create email & address displays...
+Enter email address
+if email hash matches...call made to ipfs...
+It alllows use to create email profile..
+...........
+100 people create gasless Email profile
+.........
+Alchemy sends notification alert
+
+
+
+
 ```shell
-npx hardhat accounts
 npx hardhat compile
-npx hardhat clean
-npx hardhat test
 npx hardhat node
 node scripts/sample-script.js
-npx hardhat help
 ```
+Emailjs email 
+npm i emailjs-com
+
 
 ETHablish - Establish Trustless Identity
 
