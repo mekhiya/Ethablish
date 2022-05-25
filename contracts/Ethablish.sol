@@ -1,122 +1,229 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.7;
 
-contract Ethablish {
-    //**  ASSUMPTION : For Hackathon purpose expiry is set to 365 days,
-    //but can be made dynamic in future*/
-    uint256 expiryDurationDays = 365;
+import "hardhat/console.sol";
+import "@opengsn/contracts/src/BaseRelayRecipient.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+
+contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
+    // PENDING : TO DO : Delete this
+    // dummy test variable to be deleted later
+    string data;
+
+    // FOR CHAINLINK VRF V2
+    // PENDING TO DO: Read values from configurable file, avoid hardcoding
+    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
+    uint64 private immutable i_subscriptionId;
+    bytes32 private immutable i_gasLane;
+    uint32 private immutable i_callbackGasLimit;
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
+    uint32 private constant NUM_WORDS = 1;
+
+    address vrfCoordinatorV2 = 0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed;
+    address link_token_contract = 0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
+    bytes32 keyHash =
+        0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f;
+    uint32 callbackGasLimit = 100000;
+    uint64 subscriptionId = 312;
+    uint256 s_key;
+
+    //// EVENTS FOR CHAINLINK VRF V2
+    event RequestedVRFKey(uint256 indexed requestId, string email);
+    event VRFKeyGenerated(uint256 indexed vrfKey, bytes32 emailHash);
+
+    // Contract Owner
+    address s_owner;
+
+    // License Status
+    // GENERATED - when License key is created & emai lis sent
+    // ACTIVE - once email owner completes email & address verification
+    // EXPIRED - Once Active, expires after 365 days
+    enum LicenseStatus {
+        GENERATED,
+        ACTIVE,
+        EXPIRED
+    }
+
+    //requestId mapped to emailHash
+    mapping(uint256 => bytes32) private requestIdToEmailHash;
 
     //Each struct represents a profile created for user.
     struct EmailProfile {
-        string emailHash;
+        bytes32 emailHash;
         address accountAddress;
+        uint256 licKey; // filled during license generation. Confirmed during Profile creation
+        LicenseStatus licenseStatus; // GENE
         uint256 expiryTime;
     }
 
-    //**  ASSUMPTION : Using two mappings (may be redundant) because project is still evolving
-    //might be useful in future use cases...*/
+    /**  ASSUMPTION : Using two mappings (may be redundant) because project is still evolving
+    /* might be useful in future use cases...*/
 
     //user's account address mapped to user's Email profile
-    mapping(address => EmailProfile) public accountToEmailProfile;
-    //Email hash mapped to user's Email profile
-    mapping(string => EmailProfile) public emailToEmailProfile;
+    mapping(address => EmailProfile) private accountToEmailProfile;
 
-    //to keep count of how many profiles created...
-    uint256 emailProfileCount;
+    //Email-hash mapped to user's Email profile
+    mapping(bytes32 => EmailProfile) private emailHashToEmailProfile;
 
-    //Not used...may be in future
-    //User trying to access his/her own email profile
-    // function getMyEmailProfileByAddress()
-    //     public
-    //     view
-    //     returns (EmailProfile memory)
-    // {
-    //     return accountToEmailProfile[msg.sender];
-    // }
+    // to keep count of how many License keys generated...
+    uint256 private licenseKeyCount;
 
-    //PAYABLE : Profile are created by user themself
-    //Licenses can be created by self or sponsors
-    //Check if account address is unique
-    //check if email hash is unique
-    // check if license is valid
-    //create struct - msg.sender will be accountAddress
-    // add to mapping
+    // to keep count of how many profiles created...
+    uint256 private emailProfileCount;
 
-    //0x0000000000000000000000000000000000000000000000000000000000000000
+    //**  ASSUMPTION : For Hackathon purpose expiry is set to 365 days,
+    // but can be made dynamic in future*/
+    uint256 private expiryDurationDays = 365;
 
-    function createEmailProfile(string memory _emailHash) public payable {
-        // myArray.push(1);     // add an element to the array
-        // myArray[0];          // get the element at key 0 or first element in the array
-        // myArray[0] = 20;     // update the first element in the array
+    constructor(address _trustedForwarder) VRFConsumerBaseV2(vrfCoordinatorV2) {
+        // For Biconomy Meta (Gasless) Transaction
+        _setTrustedForwarder(_trustedForwarder);
 
-        //we can also get the element in the array using the for loop
-        //for (uint j = 0; j < myArray.length; j++) {
-        //    myArray[j];
-        //}
+        // FOR CHAINLINK VRF
+        i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
+        i_gasLane = keyHash;
+        i_subscriptionId = subscriptionId;
+        i_callbackGasLimit = callbackGasLimit;
 
-        //if some mapping doesnt exist, it will be equal to 0
-        //addressName[address]!=0
+        // Assigning Contract Owner
+        s_owner = msg.sender;
+    }
 
-        accountToEmailProfile[msg.sender] = EmailProfile(
+    // Method calls chainlink vrf to get decentralised random number
+    // License key generated using vrf
+    function getVRFLicenseKey(string memory _email) public {
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS
+        );
+        bytes32 _emailHash = keccak256(bytes(_email));
+        emit RequestedVRFKey(requestId, _email);
+
+        //PENDING : TO DO
+        // Create EmailProfile, fill EmailHash & Lic status
+        // Update Mapping
+        // Update array
+
+        //Find EMailProfile & Update Values
+        emailHashToEmailProfile[_emailHash] = EmailProfile(
             _emailHash,
-            msg.sender,
-            block.timestamp + expiryDurationDays
+            0x0000000000000000000000000000000000000000,
+            0,
+            LicenseStatus.GENERATED,
+            0
+        );
+        //add to address to emailHash mapping
+        requestIdToEmailHash[requestId] = _emailHash;
+    }
+
+    // OVERRIDE called by CHAINLINK VRF
+    // emits event with key & request id
+    // frontend catches event & sends email with key
+    function fulfillRandomWords(
+        uint256 requestId, /* requestId */
+        uint256[] memory randomWords
+    ) internal override {
+        uint256 vrfKey = randomWords[0];
+
+        bytes32 _emailHash = requestIdToEmailHash[requestId];
+        // update Lic key inside EmailProfile
+        emailHashToEmailProfile[_emailHash].licKey = vrfKey;
+        licenseKeyCount++;
+        emit VRFKeyGenerated(vrfKey, _emailHash);
+    }
+
+    /**
+     * FOR OPENGSN BICONOMY GASLESS TRANSACTION
+     * OPTIONAL
+     * You should add one setTrustedForwarder(address _trustedForwarder)
+     * method with onlyOwner modifier so you can change the trusted
+     * forwarder address to switch to some other meta transaction protocol
+     * if any better protocol comes tomorrow or current one is upgraded.
+     */
+    function setTrustForwarder(address _trustedForwarder) public onlyOwner {
+        _setTrustedForwarder(_trustedForwarder);
+    }
+
+    /**
+     * OPENGSN BICONOMY GASLESS TRANSACTION
+     * Override this function.
+     * This version is to keep track of BaseRelayRecipient you are using
+     * in your contract.
+     */
+    function versionRecipient() external pure override returns (string memory) {
+        return "1";
+    }
+
+    /**
+     * OPENGSN BICONOMY GASLESS TRANSACTION
+     * GASLESS METHOD - BICONOMY
+     * META TRANSACTION
+     */
+    function CreateEmailProfile(uint256 licKey, string memory _email) public {
+        bytes32 _emailHash1 = keccak256(bytes(_email));
+
+        require(
+            emailHashToEmailProfile[_emailHash1].licKey == licKey,
+            "Wrong License Key"
         );
 
-        emailToEmailProfile[_emailHash] = EmailProfile(
-            _emailHash,
-            msg.sender,
-            block.timestamp + expiryDurationDays
-        );
+        emailHashToEmailProfile[_emailHash1].accountAddress = msg.sender;
+        emailHashToEmailProfile[_emailHash1].licenseStatus = LicenseStatus
+            .ACTIVE;
+        emailHashToEmailProfile[_emailHash1].expiryTime =
+            block.timestamp +
+            expiryDurationDays;
+
+        accountToEmailProfile[msg.sender] = emailHashToEmailProfile[
+            _emailHash1
+        ];
 
         emailProfileCount++;
-
-        //if false means it is restricted, only is valid pubKey, verification can b done
     }
 
     //Verify EmailProfile can be called by any one outside of Contract
-    function verifyEmailProfile(
-        string memory _email,
-        address _accountAddress,
-        bytes32 _pubKey
-    ) external view returns (bool) {
-        //if not isOpen, verify pub key
-        // if pubKey does not verify return
-
-        // confirm if address is linked to email
+    function verifyEmailProfile(string memory _email, address _accountAddress)
+        external
+        view
+        returns (bool)
+    {
+        // confirm if user address is linked to email
         // return true/false
         bool isVerified = false;
-        if (_pubKey == keccak256("Nitin")) {}
-        // for (uint256 i=0; i < profileAccts.length; i++){
-
-        // }
-        EmailProfile memory em = accountToEmailProfile[_accountAddress];
-        if (keccak256(bytes(em.emailHash)) == keccak256(bytes(_email))) {
+        bytes32 _emailHashVer = keccak256(bytes(_email));
+        if (
+            emailHashToEmailProfile[_emailHashVer].accountAddress ==
+            _accountAddress
+        ) {
             isVerified = true;
         }
-
         return isVerified;
     }
 
-    //PAYABLE : Profile are created by user themself
-    //function deleteEmailProfile(string memory _email) public payable {
-    //find Email Profile in mapping using _email
-    // if msg.address is same as account address inside EmailProfile
-    //delete
+    modifier onlyOwner() {
+        require(msg.sender == s_owner);
+        _;
+    }
 
-    //}
+    // PENDING : TO DO : Delete this
+    // dummy test method to be deleted later
+    function getStorage()
+        public
+        view
+        returns (string memory currentQuote, address currentOwner)
+    {
+        return (data, s_owner);
+    }
 
-    //PENDING QUESTIONS / Optional
-    //Are emails or address unique or both or pair is unique
-    //Can we provide update pair mechanism
-    //get list of accounts linked to address
-    //get list of emails linked to an account
-
-    //Future
-    // More items can be verified - Phone, Age, etc...
-    // gasless using biconomy
-    // alchemy alerts
-    // chainlink pricefeed or vrf scope ????
-    // chainlink keeper or Cross chain.
+    // PENDING : TO DO : Delete this
+    // dummy test method to be deleted later
+    function setStorage(string memory _newData) public {
+        data = _newData;
+    }
 }

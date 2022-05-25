@@ -273,3 +273,70 @@ same code can be launched on Polygon, BNB, avalanche etc... ???
 -----------
 Future
 can it verify across chains ????
+
+
+----------------------
+
+for chainlink installed
+```
+npm install @chainlink/contracts --save
+```
+For OpenGSN
+```
+npm i @opengsn/contracts
+```
+
+For biconomy install
+```
+npm install @biconomy/mexa
+```
+
+
+
+    //PAYABLE : Profile are created by user themself
+    //Licenses can be created by self or sponsors
+    //Check if account address is unique
+    //check if email hash is unique
+    // check if license is valid
+    //create struct - msg.sender will be accountAddress
+    // add to mapping
+
+    //0x0000000000000000000000000000000000000000000000000000000000000000
+
+
+    //PENDING QUESTIONS / Optional
+    //Are emails or address unique or both or pair is unique
+    //Can we provide update pair mechanism
+    //get list of accounts linked to address
+    //get list of emails linked to an account
+
+    //Future
+    // More items can be verified - Phone, Age, etc...
+    // gasless using biconomy
+    // alchemy alerts
+    // chainlink pricefeed or vrf scope ????
+    // chainlink keeper or Cross chain.
+
+
+Command to deploy contract to mumbai polygon
+```
+npx hardhat run scripts/deploy.js --network mumbai
+```
+
+For contract verification used libraray 
+```
+npm i @nomiclabs/hardhat-etherscan
+```
+verify contract on mumbai polygon (param is trusted forwarder)
+npx hardhat verify "<contract address>" --network mumbai "0x9399BB24DBB5C4b782C70c2969F58716Ebbd6a3b"
+
+FOr Create React to work with BICONOMY , OPENGSN, CHAINLINK
+```
+yarn add cipher-base
+
+npm i react-notifications
+--- npm i cipher-base (didnt work)
+npm i stream-browserify
+npm i ethereumjs-util
+npm i assert
+```
