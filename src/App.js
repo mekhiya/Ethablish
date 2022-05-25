@@ -5,7 +5,8 @@ import { Box, Button, Card, Grid, Input, TextField } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { Biconomy } from "@biconomy/mexa";
-import Ethablish from './artifacts/contracts/Ethablish.sol/Ethablish.json';
+//import Ethablish from './artifacts/contracts/Ethablish.sol/Ethablish.json';
+import Ethablish from './Ethablish.json';
 import emailjs from '@emailjs/browser';
 import {
   NotificationContainer,
