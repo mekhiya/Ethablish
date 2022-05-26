@@ -14,11 +14,11 @@ import {
 } from 'react-notifications';
 import "react-notifications/lib/notifications.css";
 
-const ethablishAddress = "0x705CA33CE93f5E05b2Db6cd986E1CE0C9Bbc5d8a";
+const ethablishAddress = "0x74EDe55f8bF18ff668924b9BAf14e134c2d69E4a";
 
 let config = {
   contract: {
-    address: "0x705CA33CE93f5E05b2Db6cd986E1CE0C9Bbc5d8a",
+    address: "0x74EDe55f8bF18ff668924b9BAf14e134c2d69E4a",
     abi: [
       {
         "inputs": [
@@ -104,6 +104,97 @@ let config = {
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "accountToEmailProfile",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "emailHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "accountAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "licKey",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum Ethablish.LicenseStatus",
+            "name": "licenseStatus",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "expiryTime",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "emailHashToEmailProfile",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "emailHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "accountAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "licKey",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum Ethablish.LicenseStatus",
+            "name": "licenseStatus",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "expiryTime",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "emailProfileCount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "getStorage",
         "outputs": [
@@ -154,6 +245,19 @@ let config = {
         "type": "function"
       },
       {
+        "inputs": [],
+        "name": "licenseKeyCount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [
           {
             "internalType": "uint256",
@@ -169,6 +273,25 @@ let config = {
         "name": "rawFulfillRandomWords",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "requestIdToEmailHash",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
@@ -250,8 +373,8 @@ let config = {
     ]
   },
   apiKey: {
-    test: "JHvKFKgNO.a7fd5a3d-470a-4124-a5ae-15877e6aefe0",
-    prod: "JHvKFKgNO.a7fd5a3d-470a-4124-a5ae-15877e6aefe0"
+    test: "58kr0KlcW.a4f5f5c3-dd1a-4fc4-a8af-6dac83b3722b",
+    prod: "58kr0KlcW.a4f5f5c3-dd1a-4fc4-a8af-6dac83b3722b"
   }
 }//For Mumbai
 
@@ -308,11 +431,9 @@ function App() {
       if (typeof window.ethereum !== "undefined") {
         setHasMetamask(true);
 
-        //event RequestedVRFKey(uint256 indexed requestId, string email);
-        //event VRFKeyGenerated(uint256 indexed vrfKey, bytes32 emailHash);
-        //
         contract.on("RequestedVRFKey", handleRequestedVRFKey);
         contract.on("VRFKeyGenerated", handleVRFKeyGenerated);
+
         return () => {
           contract.removeAllListeners("RequestedVRFKey");
           contract.removeAllListeners("KeyPicked");
@@ -415,37 +536,464 @@ function App() {
       });
   }
 
-  //function CreateEmailProfile(uint256 licKey, string memory _email) public {
-  // call the smart contract, send an update
-  async function createEmailProfile() {
-    if (!licKeyCreateProfile && !emailCreateProfile) return
-    if (typeof window.ethereum !== 'undefined') {
-      await requestAccount()
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner()
-      const contract = new ethers.Contract(ethablishAddress, Ethablish.abi, signer)
-      const transaction = await contract.CreateEmailProfile(licKeyCreateProfile, emailCreateProfile);
-      await transaction.wait()
-      console.log("tx hash is " + transaction.hash);
-    }
+  const onFundGasTankGetLicense = async () => {
+
+    let gasTankConfig = {
+      gasTankAddress: '0x295609fDCa9C61D0362DA36020E02fdc0164D86b',
+      abi: [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "fundingKey",
+              "type": "uint256"
+            }
+          ],
+          "name": "Deposit",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "actor",
+              "type": "address"
+            }
+          ],
+          "name": "DepositTokenAdded",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "actor",
+              "type": "address"
+            }
+          ],
+          "name": "MasterAccountChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "minDeposit",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "actor",
+              "type": "address"
+            }
+          ],
+          "name": "MinimumDepositChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "truestedForwarder",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "actor",
+              "type": "address"
+            }
+          ],
+          "name": "TrustedForwarderChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "actor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "receiver",
+              "type": "address"
+            }
+          ],
+          "name": "Withdraw",
+          "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "_trustedForwarder",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "allowedTokens",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "name": "dappBalances",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_fundingKey",
+              "type": "uint256"
+            }
+          ],
+          "name": "depositFor",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "name": "depositorBalances",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trustedForwarder",
+              "type": "address"
+            }
+          ],
+          "name": "initialize",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "forwarder",
+              "type": "address"
+            }
+          ],
+          "name": "isTrustedForwarder",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "masterAccount",
+          "outputs": [
+            {
+              "internalType": "address payable",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "minDeposit",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "renounceOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address payable",
+              "name": "_newAccount",
+              "type": "address"
+            }
+          ],
+          "name": "setMasterAccount",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_newMinDeposit",
+              "type": "uint256"
+            }
+          ],
+          "name": "setMinDeposit",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "allowed",
+              "type": "bool"
+            }
+          ],
+          "name": "setTokenAllowed",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address payable",
+              "name": "_forwarder",
+              "type": "address"
+            }
+          ],
+          "name": "setTrustedForwarder",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "tokenPriceFeed",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "transferOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "withdraw",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "stateMutability": "payable",
+          "type": "receive"
+        }
+      ]
+    };
+
+    const walletProviderGastTank = new ethers.providers.Web3Provider(window.ethereum);
+    const walletSignerGasTank = walletProviderGastTank.getSigner();
+
+    userAddress = await walletSignerGasTank.getAddress();
+
+    let gasTankContract = new ethers.Contract(
+      gasTankConfig.gasTankAddress,
+      gasTankConfig.abi,
+      walletSignerGasTank);
+
+    let fundingKey = '1653548918239';
+    // replace with your desired funding amount (in wei) 
+    let tx = await gasTankContract.depositFor(fundingKey, { from: userAddress, value: '1000000000000000000' });
+
+    let receipt = await tx.wait(1);
+    console.log('receipt', receipt);
+
   }
 
+
   /*
+    CREATE EMAIL PROFILE (GASLESS)
     EIP 712 using trusted forwarder.
     This is Gasless (Meta) transaction. 
     Biconomy Meta transaction
   */
   async function onSubmitWithEIP712Sign() {
     if (!licKeyCreateProfile && !emailCreateProfile) return
-    // if (typeof window.ethereum !== 'undefined') {
-    //   await requestAccount()
-    //   const provider = new ethers.providers.Web3Provider(window.ethereum);
-    //   const signer = provider.getSigner()
-    //   const contract = new ethers.Contract(ethablishAddress, Ethablish.abi, signer)
-    //   const transaction = await contract.CreateEmailProfile(licKeyCreateProfile, emailCreateProfile);
-    //   await transaction.wait()
-    //   console.log("tx hash is " + transaction.hash);
-    // }
     if (
       typeof window.ethereum !== "undefined" &&
       window.ethereum.isMetaMask
@@ -469,9 +1017,6 @@ function App() {
       walletProvider = new ethers.providers.Web3Provider(window.ethereum);
       walletSigner = walletProvider.getSigner();
 
-      console.log("walletProvider is -- " + walletProvider);
-      console.log("walletSigner is -- " + walletSigner);
-
       userAddress = await walletSigner.getAddress();
       biconomy.onEvent(biconomy.READY, async () => {
 
@@ -481,9 +1026,6 @@ function App() {
           config.contract.abi,
           biconomy.getSignerByAddress(userAddress)
         );
-
-        console.log("contractMeta check");
-        console.log(contractMeta);
 
         contractInterfaceMeta = new ethers.utils.Interface(config.contract.abi);
         //getQuoteFromNetwork();
@@ -496,36 +1038,20 @@ function App() {
     } else {
       showErrorMessage("Metamask not installed");
     }
-    console.log("reached part 2");
-    console.log("newQuote is : " + newQuote);
-
-    console.log("Wait start");
-
     //Added delay for biconomy network to establish
     await new Promise(resolve => setTimeout(resolve, 5000)); // 5 sec
 
-    console.log("Wait end");
-
-    // if (newQuote !== "" && contractMeta) {
     if (contractMeta) {
-      console.log("reached part 3");
+
       setTransactionHash("");
-      console.log('metaTxEnabled value is ');
+
       console.log(metaTxEnabled);
       if (metaTxEnabled) {
         showInfoMessage(`Getting user signature`);
-        console.log('userAddress');
-        console.log(userAddress);
-        setQuote("Nitin 111 setQuote");
-        setNewQuote("Nitin 111 setNewQuote");
-        console.log('newQuote');
-        console.log(newQuote);
-        console.log('sendTransaction call enter');
         sendTransaction(userAddress, licKeyCreateProfile, emailCreateProfile);
       } else {
         console.log("Sending normal transaction");
         let tx = await contractMeta.CreateEmailProfile(licKeyCreateProfile, emailCreateProfile);
-        //let tx = await contract.setQuote(newQuote);
         console.log("Transaction hash : ", tx.hash);
         showInfoMessage(`Transaction sent by relayer with hash ${tx.hash}`);
         let confirmation = await tx.wait();
@@ -533,10 +1059,9 @@ function App() {
         setTransactionHash(tx.hash);
 
         showSuccessMessage("Transaction confirmed on chain");
-        //getQuoteFromNetwork();
       }
     } else {
-      showErrorMessage("Please enter the quote");
+      showErrorMessage("Lic Key or Email not entered...");
     }
   }
 
@@ -545,10 +1070,7 @@ function App() {
     if (contractMeta) {
       try {
         //CreateEmailProfile(licKeyCreateProfile, emailCreateProfile);
-        console.log("start call contractMeta.populateTransaction.setStorage(arg)");
         let { data } = await contractMeta.populateTransaction.CreateEmailProfile(arg1, arg2);
-        console.log("End call contractMeta.populateTransaction.setStorage(arg)");
-        //let {data} = await contract.populateTransaction.setQuote(arg);
         let provider = biconomy.getEthersProvider();
         // let gasLimit = await provider.estimateGas({
         //   to: config.contract.address,
@@ -565,10 +1087,7 @@ function App() {
         };
         let tx;
         try {
-          console.log('Printing Nitin Params');
-          console.log(txParams);
           tx = await provider.send("eth_sendTransaction", [txParams]);
-          console.log('provider.send is sent');
         }
         catch (err) {
           console.log("handle errors like signature denied here");
@@ -586,31 +1105,14 @@ function App() {
           console.log(transaction);
           console.log("Transaction confirmed on chain");
           setTransactionHash(tx);
-          //getQuoteFromNetwork();
         })
 
       } catch (error) {
-        console.log('XYZ Error reached');
         console.log('error message is : ');
         console.log(error);
       }
     }
   };
-
-  async function setStorage() {
-    console.log("setStorage called");
-    if (typeof window.ethereum !== 'undefined') {
-      await requestAccount()
-      //const provider = new ethers.providers.Web3Provider(window.ethereum);
-      //const signer = provider.getSigner()
-      //const contract = new ethers.Contract(ethablishAddress, Ethablish.abi, signer)
-      const transaction = await contract.setStorage(Date.now.toString());
-      await transaction.wait()
-    }
-  }
-
-
-
 
   // function verifyEmailProfile(string memory _email, address _accountAddress)
   // external view returns (bool)
@@ -706,7 +1208,7 @@ function App() {
               <div>
                 <Button
                   variant="contained"
-                  onClick={createEmailProfile}>Create My Email Profile</Button>
+                  onClick={onSubmitWithEIP712Sign}>Create My Email Profile</Button>
               </div>
             </Box>
 
@@ -761,11 +1263,6 @@ function App() {
             >
               <div>
                 <h3>Generate License Key</h3>
-                {/* <TextField
-                  onChange={e => setEmailLicValue(e.target.value)}
-                  type='email'
-                  placeholder='test@test.com'
-                  id="outlined-basic" label="Email" variant="outlined" size='small' /> */}
                 <TextField
                   onChange={event => (emailLicGen.current = event.target.value)}
                   type='email'
@@ -789,7 +1286,7 @@ function App() {
             <div>
               <Button
                 variant="contained"
-                onClick={onSubmitWithEIP712Sign}>Test gasless</Button>
+                onClick={onFundGasTankGetLicense}>Test Gas Tank Funding</Button>
             </div>
           </Grid>
         </Grid>

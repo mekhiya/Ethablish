@@ -48,7 +48,7 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
     }
 
     //requestId mapped to emailHash
-    mapping(uint256 => bytes32) private requestIdToEmailHash;
+    mapping(uint256 => bytes32) public requestIdToEmailHash;
 
     //Each struct represents a profile created for user.
     struct EmailProfile {
@@ -63,16 +63,16 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
     /* might be useful in future use cases...*/
 
     //user's account address mapped to user's Email profile
-    mapping(address => EmailProfile) private accountToEmailProfile;
+    mapping(address => EmailProfile) public accountToEmailProfile;
 
     //Email-hash mapped to user's Email profile
-    mapping(bytes32 => EmailProfile) private emailHashToEmailProfile;
+    mapping(bytes32 => EmailProfile) public emailHashToEmailProfile;
 
     // to keep count of how many License keys generated...
-    uint256 private licenseKeyCount;
+    uint256 public licenseKeyCount;
 
     // to keep count of how many profiles created...
-    uint256 private emailProfileCount;
+    uint256 public emailProfileCount;
 
     //**  ASSUMPTION : For Hackathon purpose expiry is set to 365 days,
     // but can be made dynamic in future*/
@@ -173,14 +173,25 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
             "Wrong License Key"
         );
 
-        emailHashToEmailProfile[_emailHash1].accountAddress = msg.sender;
+        // IMPORTANT
+        // EIP2771 META Transaction will give wrong value when used with
+        // msg.sender. You have to use _msgSender()
+
+        address actualUserAddress = _msgSender();
+        //emailHashToEmailProfile[_emailHash1].accountAddress = msg.sender;
+        emailHashToEmailProfile[_emailHash1].accountAddress = actualUserAddress;
         emailHashToEmailProfile[_emailHash1].licenseStatus = LicenseStatus
             .ACTIVE;
         emailHashToEmailProfile[_emailHash1].expiryTime =
             block.timestamp +
             expiryDurationDays;
 
-        accountToEmailProfile[msg.sender] = emailHashToEmailProfile[
+        // IMPORTANT DO NOT USE msg.sender
+        // accountToEmailProfile[msg.sender] = emailHashToEmailProfile[
+        //     _emailHash1
+        // ];
+
+        accountToEmailProfile[actualUserAddress] = emailHashToEmailProfile[
             _emailHash1
         ];
 
