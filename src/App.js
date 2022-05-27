@@ -19,12 +19,12 @@ import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import { textAlign } from '@mui/system';
 
-const ethablishAddress = "0x4e9b907a45cEe828E9fE0716030C050377e3f587";
+const ethablishAddress = "0x12dcAB13fc39485Bf396EeD70f910C08e5cCaC88";
 
 // For Biconomy - EIP 2771 - Gasless transaction
 let config = {
   contract: {
-    address: "0x4e9b907a45cEe828E9fE0716030C050377e3f587",
+    address: "0x12dcAB13fc39485Bf396EeD70f910C08e5cCaC88",
     abi: [
       {
         "inputs": [
@@ -1036,9 +1036,10 @@ function App() {
   // returns (bool)
   async function sendFundWithEmailProfile() {
     if (typeof window.ethereum !== 'undefined') {
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const contract = new ethers.Contract(ethablishAddress, Ethablish.abi, provider)
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
+      const contract = new ethers.Contract(ethablishAddress, Ethablish.abi, signer);
+
       try {
         const data = await contract.SendFundViaEmailProfileCall(sendFundEmail, { value: fundAmount });
         if (data) {

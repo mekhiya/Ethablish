@@ -230,12 +230,13 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
         payable
         returns (bool)
     {
+        bytes32 _emailHashVer = keccak256(bytes(_email));
         require(
-            verifyEmailProfile(_email, msg.sender),
-            "Not a Verified EmailProfile"
+            (emailHashToEmailProfile[_emailHashVer].licenseStatus ==
+                LicenseStatus.ACTIVE),
+            "Email Profile not active."
         );
 
-        bytes32 _emailHashVer = keccak256(bytes(_email));
         address _to = emailHashToEmailProfile[_emailHashVer].accountAddress;
         (bool sent, ) = _to.call{value: msg.value}("");
         require(sent, "Failed to send Funds");
