@@ -1,5 +1,7 @@
 import React from 'react';
 import logo from './logo.svg';
+import biconomylogo from './biconomylogo.png';
+import chainlinklogo from './chainlinklogo.png';
 import './App.css';
 import { Box, Button, Card, Grid, Input, TextField } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
@@ -11,14 +13,18 @@ import emailjs from '@emailjs/browser';
 import {
   NotificationContainer,
   NotificationManager
-} from 'react-notifications';
+} from "react-notifications";
 import "react-notifications/lib/notifications.css";
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import { textAlign } from '@mui/system';
 
-const ethablishAddress = "0x74EDe55f8bF18ff668924b9BAf14e134c2d69E4a";
+const ethablishAddress = "0x4e9b907a45cEe828E9fE0716030C050377e3f587";
 
+// For Biconomy - EIP 2771 - Gasless transaction
 let config = {
   contract: {
-    address: "0x74EDe55f8bF18ff668924b9BAf14e134c2d69E4a",
+    address: "0x4e9b907a45cEe828E9fE0716030C050377e3f587",
     abi: [
       {
         "inputs": [
@@ -55,12 +61,6 @@ let config = {
             "internalType": "uint256",
             "name": "requestId",
             "type": "uint256"
-          },
-          {
-            "indexed": false,
-            "internalType": "string",
-            "name": "email",
-            "type": "string"
           }
         ],
         "name": "RequestedVRFKey",
@@ -106,79 +106,20 @@ let config = {
       {
         "inputs": [
           {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
+            "internalType": "string",
+            "name": "_email",
+            "type": "string"
           }
         ],
-        "name": "accountToEmailProfile",
+        "name": "SendFundViaEmailProfileCall",
         "outputs": [
           {
-            "internalType": "bytes32",
-            "name": "emailHash",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "address",
-            "name": "accountAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "licKey",
-            "type": "uint256"
-          },
-          {
-            "internalType": "enum Ethablish.LicenseStatus",
-            "name": "licenseStatus",
-            "type": "uint8"
-          },
-          {
-            "internalType": "uint256",
-            "name": "expiryTime",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes32",
+            "internalType": "bool",
             "name": "",
-            "type": "bytes32"
+            "type": "bool"
           }
         ],
-        "name": "emailHashToEmailProfile",
-        "outputs": [
-          {
-            "internalType": "bytes32",
-            "name": "emailHash",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "address",
-            "name": "accountAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "licKey",
-            "type": "uint256"
-          },
-          {
-            "internalType": "enum Ethablish.LicenseStatus",
-            "name": "licenseStatus",
-            "type": "uint8"
-          },
-          {
-            "internalType": "uint256",
-            "name": "expiryTime",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
+        "stateMutability": "payable",
         "type": "function"
       },
       {
@@ -189,24 +130,6 @@ let config = {
             "internalType": "uint256",
             "name": "",
             "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "getStorage",
-        "outputs": [
-          {
-            "internalType": "string",
-            "name": "currentQuote",
-            "type": "string"
-          },
-          {
-            "internalType": "address",
-            "name": "currentOwner",
-            "type": "address"
           }
         ],
         "stateMutability": "view",
@@ -271,38 +194,6 @@ let config = {
           }
         ],
         "name": "rawFulfillRandomWords",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "name": "requestIdToEmailHash",
-        "outputs": [
-          {
-            "internalType": "bytes32",
-            "name": "",
-            "type": "bytes32"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "_newData",
-            "type": "string"
-          }
-        ],
-        "name": "setStorage",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -397,11 +288,15 @@ function App() {
   const [emailCreateProfile, setEmailCreateProfileValue] = useState("");
   const [accountAddress, setAccountAddressValue] = useState("");
   const [licKeyCreateProfile, setLicKeyCreateProfile] = useState("");
-  const [isOpen, setisOpenValue] = useState(false);
+  // const [isOpen, setisOpenValue] = useState(false);
 
   const [verifyEmail, setVerifyEmailValue] = useState("");
   const [verifyAccountAddress, setVerifyAccountAddressValue] = useState("");
-  const [isVerified, setIsVerifiedValue] = useState(false);
+  // const [isVerified, setIsVerifiedValue] = useState(false);
+
+  const [sendFundEmail, setSendFundEmailValue] = useState("");
+  const [fundAmount, setFundAmountValue] = useState("");
+
 
   const [transactionHash, setTransactionHash] = useState("");
   const [vrfReqId, setVrfReqId] = useState("");
@@ -413,8 +308,8 @@ function App() {
 
   //Flag used to decide if want to send Gasless or normal transaction
   const [metaTxEnabled] = useState(true);
-  const [newQuote, setNewQuote] = useState("");
-  const [quote, setQuote] = useState("This is a default quote");
+  // const [newQuote, setNewQuote] = useState("");
+  // const [quote, setQuote] = useState("This is a default quote");
 
   useEffect(() => {
 
@@ -479,7 +374,7 @@ function App() {
     // Start CIRCULAR
     //Enable buttons - Fund gas & GenerateLicense
 
-    setTransactionHash("");
+    //setTransactionHash("");
     console.log("Sending VRF Request transaction");
 
     // const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -500,7 +395,7 @@ function App() {
       console.log(confirmation);
       setTransactionHash(transaction.hash);
       console.log("emailLicGen : " + emailLicGen.current);
-      showSuccessMessage("Transaction confirmed on chain");
+      //showInfoMessage("Waiting for Chainlink VRF to fullfil License Key");
     } else {
       console.log("Email absent or contract not defined yet")
     }
@@ -534,6 +429,7 @@ function App() {
       }, function (error) {
         console.log('FAILED...', error);
       });
+    showSuccessMessage("Email with License Key sent");
   }
 
   const onFundGasTankGetLicense = async () => {
@@ -982,7 +878,7 @@ function App() {
 
     let receipt = await tx.wait(1);
     console.log('receipt', receipt);
-
+    showSuccessMessage("Gas Tank funded with 1 Matic");
   }
 
 
@@ -1123,9 +1019,32 @@ function App() {
       try {
         const data = await contract.verifyEmailProfile(verifyEmail, verifyAccountAddress);
         if (data) {
-          setIsVerifiedValue(true);
+          showSuccessMessage("Verified! Email & Account are linked");
         } else {
-          setIsVerifiedValue(false);
+          showErrorMessage("Not Verified! Email & Account not linked");
+        }
+        console.log('data: ', data)
+      } catch (err) {
+        console.log("Error: ", err)
+      }
+    }
+  }
+
+  // function SendFundViaEmailProfileCall(string memory _email)
+  // public
+  // payable
+  // returns (bool)
+  async function sendFundWithEmailProfile() {
+    if (typeof window.ethereum !== 'undefined') {
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const contract = new ethers.Contract(ethablishAddress, Ethablish.abi, provider)
+      const signer = provider.getSigner();
+      try {
+        const data = await contract.SendFundViaEmailProfileCall(sendFundEmail, { value: fundAmount });
+        if (data) {
+          showSuccessMessage("Amount sent succesfully!");
+        } else {
+          showErrorMessage("Amount not sent!");
         }
         console.log('data: ', data)
       } catch (err) {
@@ -1150,27 +1069,23 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <Grid justify="space-between" spacing={80} container>
-          <Grid item>
-            <img src={logo} className="App-logo" alt="logo" />
-          </Grid>
-          <Grid item>
-            <div>
-              {hasMetamask ? (
-                isConnected ? (
-                  "Connected! "
-                ) : (
-                  <Button variant="contained" color='primary' onClick={() => connect()}>Connect</Button>
-                )
-              ) : (
-                "Please install metamask"
-              )}
-              {isConnected ? accountAddress : ""}
-            </div>
-          </Grid>
-        </Grid>
+        <img src={logo} className="App-logoNew" alt="logo" />
       </header>
       <main>
+        <div>
+          <div>
+            {hasMetamask ? (
+              isConnected ? (
+                "Connected! "
+              ) : (
+                <Button variant="contained" color='primary' onClick={() => connect()}>Connect</Button>
+              )
+            ) : (
+              "Please install metamask"
+            )}
+            {isConnected ? accountAddress : ""}
+          </div>
+        </div>
 
         <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
           <Grid item xs={6}>
@@ -1186,6 +1101,83 @@ function App() {
               autoComplete="off"
             >
               <div>
+                <Alert severity="info">
+                  <AlertTitle>For Employers</AlertTitle>
+                  <strong>Calls Chainlink VRF - </strong>to get license key
+                </Alert>
+                <h3>Generate License Key</h3>
+                <TextField
+                  onChange={event => (emailLicGen.current = event.target.value)}
+                  type='email'
+                  placeholder='test@test.com'
+                  id="outlined-basic" label="Email" variant="outlined" size='small' />
+              </div>
+              {/* <div>
+                <TextField
+                  value={accountAddress}
+                  disabled
+                  id="outlined-basic" label="Account Address" variant="outlined" size='small' />
+              </div> */}
+              <div>
+                <Button
+                  variant="contained"
+                  onClick={generateLicenseKeyAndSendEmail}>Generate License key. Send Email</Button>
+              </div>
+              <img src={chainlinklogo} className="partner-logoNew" alt="logo" />
+
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box
+              marginY="20px"
+              padding="20px"
+              component="form"
+              sx={{
+                '& .MuiTextField-root': { m: 1, width: '25ch' },
+                border: 1,
+              }}
+              noValidate
+              autoComplete="off"
+            >
+              <div>
+                <Alert severity="info">
+                  <AlertTitle>For Employers</AlertTitle>
+                  <strong>Fund Gas Tank - </strong>Send 1 Matic to Gas Tank
+                </Alert>
+                <h2>Fund Gas Tank with 1 Matic</h2>
+                <Button
+                  variant="contained"
+                  onClick={onFundGasTankGetLicense}>Fund Gas Tank with 1 Matic</Button>
+              </div>
+              <img src={biconomylogo} className="partner-logoNew" alt="logo" />
+            </Box>
+          </Grid>
+          <Grid item xs={8}>
+            <Box
+              marginY="20px"
+              padding="20px"
+              component="form"
+              sx={{
+                '& .MuiTextField-root': { m: 1, width: '25ch' },
+                border: '3px dashed grey',
+              }}
+              noValidate
+              autoComplete="off"
+            >
+              <div>
+                <Alert severity="success">
+                  <AlertTitle>For New Employees (Freelancers) Onboarding</AlertTitle>
+                </Alert>
+                <Alert severity="info">
+                  <AlertTitle>GASLESS Transaction - No Gas required</AlertTitle>
+                </Alert>
+                <Alert severity="success">
+                  <strong>Step 1 - </strong>Check your email for licenses key<br />
+                  <strong>Step 2 - </strong>Connect Metamask Account<br />
+                  <strong>Step 3 - </strong>Create Email Profile
+                </Alert>
+
+                <h2></h2>
                 <h3>Create Email Profile</h3>
                 <TextField
                   onChange={e => setEmailCreateProfileValue(e.target.value)}
@@ -1213,7 +1205,7 @@ function App() {
             </Box>
 
           </Grid>
-          <Grid item xs={6}>
+          <Grid item xs={4}>
             <Box
               marginY="20px"
               padding="20px"
@@ -1225,28 +1217,43 @@ function App() {
               noValidate
               autoComplete="off"
             >
-              <div>
-                <h3>Verify Email Profile</h3>
-                <TextField
-                  onChange={e => setVerifyEmailValue(e.target.value)}
-                  type='email'
-                  placeholder='test@test.com'
-                  id="outlined-basic" label="Email" variant="outlined" size='small' />
-              </div>
-              <div>
-                <TextField
-                  onChange={e => setVerifyAccountAddressValue(e.target.value)}
-                  id="outlined-basic" label="Account Address" variant="outlined" size='small' />
-              </div>
-              <div>
-                <Button
-                  variant="contained"
-                  onClick={verifyEmailProfile}>Verify Email Profile</Button>
-              </div>
-              <div>
-                Verfication status of Email Profile is {isVerified}.
-              </div>
+              <h2><strong><i>ETH</i></strong>ablish.io</h2>
+              Replace cryptocurrency addresses with your email address on Ethablish. COMING SOON...
+            </Box>
+          </Grid>
 
+          <Grid item xs={6}>
+            <Box
+              marginY="20px"
+              padding="20px"
+              component="form"
+              sx={{
+                '& .MuiTextField-root': { m: 1, width: '25ch' },
+                border: 1,
+              }}
+              noValidate
+              autoComplete="off"
+            >
+              <div>
+                <Alert severity="info">
+                  <AlertTitle>Enter Email & Account address to verify.</AlertTitle>
+                </Alert>
+                <div>
+                  <h3>Verify Email Profile</h3>
+                  <TextField
+                    onChange={e => setVerifyEmailValue(e.target.value)}
+                    type='email'
+                    placeholder='test@test.com'
+                    id="outlined-basic" label="Email" variant="outlined" size='small' />
+                  <TextField
+                    onChange={e => setVerifyAccountAddressValue(e.target.value)}
+                    id="outlined-basic" label="Account Address" variant="outlined" size='small' />
+
+                  <Button
+                    variant="contained"
+                    onClick={verifyEmailProfile}>Verify Email Profile</Button>
+                </div>
+              </div>
             </Box>
           </Grid>
           <Grid item xs={6}>
@@ -1262,35 +1269,32 @@ function App() {
               autoComplete="off"
             >
               <div>
-                <h3>Generate License Key</h3>
-                <TextField
-                  onChange={event => (emailLicGen.current = event.target.value)}
-                  type='email'
-                  placeholder='test@test.com'
-                  id="outlined-basic" label="Email" variant="outlined" size='small' />
-              </div>
-              <div>
-                <TextField
-                  value={accountAddress}
-                  disabled
-                  id="outlined-basic" label="Account Address" variant="outlined" size='small' />
-              </div>
-              <div>
-                <Button
-                  variant="contained"
-                  onClick={generateLicenseKeyAndSendEmail}>Generate License key. Send Email</Button>
+                <Alert severity="info">
+                  <AlertTitle>Send Funds using Email</AlertTitle>
+                  To send cryptocurrency, all you need to know is the recipient’s Email address.
+                </Alert>
+                <div>
+                  <TextField
+                    onChange={e => setSendFundEmailValue(e.target.value)}
+                    type='email'
+                    placeholder='test@test.com'
+                    id="outlined-basic" label="Email" variant="outlined" size='small' />
+                  <TextField
+                    placeholder='Amount in WEI (MATIC)'
+                    onChange={e => setFundAmountValue(e.target.value)}
+                    id="outlined-basic" label="Amount" variant="outlined" size='small' />
+
+                  <Button
+                    variant="contained"
+                    onClick={sendFundWithEmailProfile}
+                  >Send Funds</Button>
+                </div>
               </div>
             </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <div>
-              <Button
-                variant="contained"
-                onClick={onFundGasTankGetLicense}>Test Gas Tank Funding</Button>
-            </div>
           </Grid>
         </Grid>
       </main>
+      <NotificationContainer />
     </div >
   );
 }

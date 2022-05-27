@@ -9,10 +9,6 @@ import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
 contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
-    // PENDING : TO DO : Delete this
-    // dummy test variable to be deleted later
-    string data;
-
     // FOR CHAINLINK VRF V2
     // PENDING TO DO: Read values from configurable file, avoid hardcoding
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
@@ -31,24 +27,26 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
     uint256 s_key;
 
     //// EVENTS FOR CHAINLINK VRF V2
-    event RequestedVRFKey(uint256 indexed requestId, string email);
+    event RequestedVRFKey(uint256 indexed requestId);
     event VRFKeyGenerated(uint256 indexed vrfKey, bytes32 emailHash);
 
     // Contract Owner
     address s_owner;
 
     // License Status
-    // GENERATED - when License key is created & emai lis sent
-    // ACTIVE - once email owner completes email & address verification
-    // EXPIRED - Once Active, expires after 365 days
+    // 0 NoExist - was never created
+    // 1 GENERATED - when License key is created & emai lis sent
+    // 2 ACTIVE - once email owner completes email & address verification
+    // 3 EXPIRED - Once Active, expires after 365 days
     enum LicenseStatus {
+        NoExist,
         GENERATED,
         ACTIVE,
         EXPIRED
     }
 
     //requestId mapped to emailHash
-    mapping(uint256 => bytes32) public requestIdToEmailHash;
+    mapping(uint256 => bytes32) private requestIdToEmailHash;
 
     //Each struct represents a profile created for user.
     struct EmailProfile {
@@ -63,10 +61,10 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
     /* might be useful in future use cases...*/
 
     //user's account address mapped to user's Email profile
-    mapping(address => EmailProfile) public accountToEmailProfile;
+    mapping(address => EmailProfile) private accountToEmailProfile;
 
     //Email-hash mapped to user's Email profile
-    mapping(bytes32 => EmailProfile) public emailHashToEmailProfile;
+    mapping(bytes32 => EmailProfile) private emailHashToEmailProfile;
 
     // to keep count of how many License keys generated...
     uint256 public licenseKeyCount;
@@ -103,12 +101,6 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
             NUM_WORDS
         );
         bytes32 _emailHash = keccak256(bytes(_email));
-        emit RequestedVRFKey(requestId, _email);
-
-        //PENDING : TO DO
-        // Create EmailProfile, fill EmailHash & Lic status
-        // Update Mapping
-        // Update array
 
         //Find EMailProfile & Update Values
         emailHashToEmailProfile[_emailHash] = EmailProfile(
@@ -120,6 +112,7 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
         );
         //add to address to emailHash mapping
         requestIdToEmailHash[requestId] = _emailHash;
+        emit RequestedVRFKey(requestId);
     }
 
     // OVERRIDE called by CHAINLINK VRF
@@ -200,7 +193,7 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
 
     //Verify EmailProfile can be called by any one outside of Contract
     function verifyEmailProfile(string memory _email, address _accountAddress)
-        external
+        public
         view
         returns (bool)
     {
@@ -212,7 +205,12 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
             emailHashToEmailProfile[_emailHashVer].accountAddress ==
             _accountAddress
         ) {
-            isVerified = true;
+            if (
+                emailHashToEmailProfile[_emailHashVer].licenseStatus ==
+                LicenseStatus.ACTIVE
+            ) {
+                isVerified = true;
+            }
         }
         return isVerified;
     }
@@ -222,19 +220,25 @@ contract Ethablish is BaseRelayRecipient, VRFConsumerBaseV2 {
         _;
     }
 
-    // PENDING : TO DO : Delete this
-    // dummy test method to be deleted later
-    function getStorage()
+    /**
+     * Sending Funds Via EmailProfile
+     * Once EMail & Account link is Established
+     * Sender can send money using Email address
+     */
+    function SendFundViaEmailProfileCall(string memory _email)
         public
-        view
-        returns (string memory currentQuote, address currentOwner)
+        payable
+        returns (bool)
     {
-        return (data, s_owner);
-    }
+        require(
+            verifyEmailProfile(_email, msg.sender),
+            "Not a Verified EmailProfile"
+        );
 
-    // PENDING : TO DO : Delete this
-    // dummy test method to be deleted later
-    function setStorage(string memory _newData) public {
-        data = _newData;
+        bytes32 _emailHashVer = keccak256(bytes(_email));
+        address _to = emailHashToEmailProfile[_emailHashVer].accountAddress;
+        (bool sent, ) = _to.call{value: msg.value}("");
+        require(sent, "Failed to send Funds");
+        return sent;
     }
 }

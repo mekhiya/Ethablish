@@ -7,6 +7,18 @@
   pointer-events: none;
 }
 
+.App-logoNew {
+  height: 25vmin;
+  pointer-events: none;
+  padding: 10px;
+}
+
+.partner-logoNew {
+  height: 10vmin;
+  pointer-events: none;
+  padding: 10px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
@@ -14,7 +26,7 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  /* background-color: #282c34; */
   min-height: 20vh;
   display: flex;
   flex-direction: column;
